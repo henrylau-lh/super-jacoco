@@ -24,7 +24,7 @@
         <java.version>1.8</java.version>
         <spring-cloud.version>Finchley.RELEASE</spring-cloud.version>
         <mybatis-spring-boot>1.2.0</mybatis-spring-boot>
-        <mysql-connector>5.1.39</mysql-connector>
+        <mysql-connector>8.0.33</mysql-connector>
         <JAVA_HOME>/Library/Java/JavaVirtualMachines/jdk1.8.0_121.jdk/Contents/Home</JAVA_HOME>
     </properties>
 
@@ -258,7 +258,7 @@
                     <dependency>
                         <groupId>mysql</groupId>
                         <artifactId>mysql-connector-java</artifactId>
-                        <version>5.1.46</version>
+                        <version>8.0.33</version>
                     </dependency>
                     <dependency>
                         <groupId>tk.mybatis</groupId>
