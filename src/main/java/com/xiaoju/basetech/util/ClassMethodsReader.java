@@ -1,6 +1,6 @@
 package com.xiaoju.basetech.util;
 
-import jdk.internal.org.objectweb.asm.*;
+import org.objectweb.asm.*;
 
 import java.io.File;
 import java.io.FileInputStream;
