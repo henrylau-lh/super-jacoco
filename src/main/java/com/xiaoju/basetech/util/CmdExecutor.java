@@ -3,12 +3,16 @@ package com.xiaoju.basetech.util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 /**
  * @description:
@@ -22,6 +26,10 @@ public class CmdExecutor {
     private static AtomicInteger counter = new AtomicInteger(0);
 
     private static int maxThread = 64;
+
+    private static final boolean IS_WINDOWS = System.getProperty("os.name").toLowerCase().contains("win");
+
+    private static final String WORK_DIR = Paths.get(System.getProperty("user.home")).toString();
 
     private static ThreadPoolExecutor executor = new ThreadPoolExecutor(20, maxThread, 5 * 60, TimeUnit.SECONDS,
             new ArrayBlockingQueue<>(1), r -> new Thread(r, "CmdThread-" + counter.getAndIncrement()));
@@ -46,9 +54,11 @@ public class CmdExecutor {
             }
 
             LOG.info("executeCmd : bash -c " + e.toString());
-            ProcessBuilder var12 = new ProcessBuilder(new String[]{"bash", "-c", e.toString()});
-            var12.redirectErrorStream(true);
-            process = var12.start();
+
+//            ProcessBuilder var12 = new ProcessBuilder(new String[]{"bash", "-c", e.toString()});
+//            ProcessBuilder var12 = new ProcessBuilder(new String[]{e.toString()});
+//            var12.redirectErrorStream(true);
+            process = executeChain(e.toString());
             CmdExecutor.ReadLine readLine = new CmdExecutor.ReadLine(process.getInputStream(), ret, true);
             Future readLineFuture = executor.submit(readLine);
             long begin = System.currentTimeMillis();
@@ -116,5 +126,40 @@ public class CmdExecutor {
             }
 
         }
+    }
+
+
+    public static Process executeChain(String commands) throws Exception {
+        String workDir = WORK_DIR;
+
+//        List<String> commandList = new ArrayList<>(Arrays.asList(commands.split("&&")));
+        List<String> commandList = Arrays.stream(commands.split("&&")).map(String::trim).collect(Collectors.toList());
+        if (commandList.get(0).contains("cd ")) {
+            workDir = commandList.get(0).split(" ")[1];
+            commandList.remove(0);
+        }
+
+        // 验证工作目录存在性
+        Path workspace = Paths.get(workDir);
+        if (!Files.exists(workspace)) {
+            throw new FileNotFoundException("工作目录不存在: " + workspace.toAbsolutePath());
+        }
+
+        // 构建跨平台命令链
+        String commandChain = String.join(" && ", commandList);
+        List<String> shellCommand = IS_WINDOWS ?
+                Arrays.asList("cmd.exe", "/c", commandChain.replaceAll("cp -rf", "xcopy /E /I /Y").replaceAll("rm -rf", "rmdir /S /Q")) :
+                Arrays.asList("bash", "-c", commandChain);
+
+        // 配置进程参数
+        ProcessBuilder pb = new ProcessBuilder(shellCommand)
+                .directory(workspace.toFile())
+                .redirectErrorStream(true);
+
+        // 启动进程
+        System.out.printf("[%s] 执行命令链: %s%n",
+                new Date(), String.join(" ", shellCommand));
+
+        return pb.start();
     }
 }

@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
+import java.nio.file.Paths;
 
 import static com.xiaoju.basetech.util.Constants.CODE_ROOT;
 
@@ -36,8 +37,12 @@ public class CodeCloneExecutor {
         coverageReport.setLogFile(logFile);
         try {
             String uuid = coverageReport.getUuid();
-            String nowLocalPath = CODE_ROOT + uuid + "/" + coverageReport.getNowVersion().replace("/", "_");
+            String nowLocalPath = Paths.get(CODE_ROOT, uuid, coverageReport.getNowVersion().replace("/", "_")).toString();
             coverageReport.setNowLocalPath(nowLocalPath);
+            String uuidPath = Paths.get(CODE_ROOT, uuid).toString();
+            if (new File(uuidPath).exists()) {
+                FileUtil.cleanDir(uuidPath);
+            }
             if (new File(CODE_ROOT + uuid + "/").exists()) {
                 FileUtil.cleanDir(CODE_ROOT + uuid + "/");
             }
@@ -45,7 +50,7 @@ public class CodeCloneExecutor {
             log.info("uuid {}开始下载代码...", uuid);
             gitHandler.cloneRepository(gitUrl, nowLocalPath, coverageReport.getNowVersion());
             if (coverageReport.getType() == Constants.ReportType.DIFF.val()) {
-                String baseLocalPath = CODE_ROOT + uuid + "/" + coverageReport.getBaseVersion().replace("/", "_");
+                String baseLocalPath = Paths.get(CODE_ROOT, uuid, coverageReport.getBaseVersion().replace("/", "_")).toString();
                 coverageReport.setBaseLocalPath(baseLocalPath);
                 gitHandler.cloneRepository(gitUrl, baseLocalPath, coverageReport.getBaseVersion());
             }

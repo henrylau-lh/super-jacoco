@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
+import java.nio.file.Paths;
 
 import static com.xiaoju.basetech.util.Constants.REPORT_PATH;
 
@@ -20,7 +21,7 @@ public class ReportCopyExecutor {
     public void copyReport(CoverageReportEntity coverageReport) {
 
         //复制report报告
-        String[] cpCmd = new String[]{"cp -rf " + new File(coverageReport.getReportFile()).getParent() + "/ " + REPORT_PATH + coverageReport.getUuid()};
+        String[] cpCmd = new String[]{"cp -rf " + new File(coverageReport.getReportFile()).getParent() + "/ " + Paths.get(REPORT_PATH, coverageReport.getUuid())};
         int cpExitCode;
         try {
             cpExitCode = CmdExecutor.executeCmd(cpCmd, 600000L);
